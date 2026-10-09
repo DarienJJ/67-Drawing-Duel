@@ -1,0 +1,672 @@
+<html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dibuja el 67 - ¡Duelo Arcade con IA Gemini!</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Press Start 2P y Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .arcade-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.7), 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        .glow-box {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+        }
+        canvas {
+            touch-action: none;
+            cursor: crosshair;
+        }
+        .color-btn {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+        .color-btn.selected {
+            outline: 4px solid white;
+            transform: scale(1.15);
+            box-shadow: 0 0 15px rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col items-center justify-between p-4 md:p-6 select-none">
+
+    <header class="w-full max-w-4xl text-center my-2">
+        <h1 class="arcade-font text-xl md:text-3xl text-blue-400 glow-text mb-2">DUELO DE 67 CON IA</h1>
+        <p class="text-sm md:text-base text-slate-300">¡Dibuja la mayor cantidad de <strong>"67"</strong> en <strong>67s y 67ms</strong> evaluados por Gemini!</p>
+    </header>
+
+    <main id="app-container" class="w-full max-w-3xl flex-1 flex flex-col items-center justify-center my-4">
+        
+        <!-- Welcome Screen -->
+        <div id="screen-welcome" class="w-full bg-slate-800/90 border-4 border-blue-500 rounded-2xl p-6 md:p-10 text-center glow-box flex flex-col items-center">
+            <div class="text-6xl md:text-8xl mb-4 animate-bounce">✏️ 67</div>
+            <h2 class="arcade-font text-lg md:text-2xl text-blue-400 mb-4">¿Quién es el rey del 67?</h2>
+            <p class="text-slate-300 text-sm md:text-base mb-6 max-w-lg">
+                Competencia local de 2 jugadores. Cada jugador elige su color. Mantén presionada la tecla <kbd class="bg-slate-700 px-1.5 py-0.5 rounded text-blue-300 border border-blue-400">ESPACIO</kbd> mientras mueves el ratón para dibujar. ¡La API de Gemini evaluará tus trazos al final!
+            </p>
+            <button onclick="startGame()" class="arcade-font bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 active:scale-95 border-2 border-blue-300 text-sm md:text-base">
+                ¡COMENZAR DUELO!
+            </button>
+        </div>
+
+        <!-- Color Selection Screen -->
+        <div id="screen-color" class="hidden w-full bg-slate-800/90 border-4 border-cyan-500 rounded-2xl p-6 md:p-8 text-center glow-box flex flex-col items-center">
+            <h2 id="color-title" class="arcade-font text-lg md:text-2xl text-cyan-400 mb-2">JUGADOR 1: ELIGE TU COLOR</h2>
+            <p class="text-slate-300 text-sm mb-6">Selecciona el color con el que pintarás tus trazos en el lienzo:</p>
+            
+            <div class="grid grid-cols-4 gap-4 mb-8 w-full max-w-sm">
+                <!-- Palette Colors (Reemplazado el segundo azul por marrón #a0522d) -->
+                <button onclick="selectColor('#38bdf8', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#38bdf8] border-4 border-white/20 shadow-lg selected" data-color="#38bdf8"></button>
+                <button onclick="selectColor('#f43f5e', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#f43f5e] border-4 border-white/20 shadow-lg" data-color="#f43f5e"></button>
+                <button onclick="selectColor('#10b981', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#10b981] border-4 border-white/20 shadow-lg" data-color="#10b981"></button>
+                <button onclick="selectColor('#fbbf24', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#fbbf24] border-4 border-white/20 shadow-lg" data-color="#fbbf24"></button>
+                <button onclick="selectColor('#a855f7', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#a855f7] border-4 border-white/20 shadow-lg" data-color="#a855f7"></button>
+                <button onclick="selectColor('#ec4899', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#ec4899] border-4 border-white/20 shadow-lg" data-color="#ec4899"></button>
+                <button onclick="selectColor('#a0522d', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#a0522d] border-4 border-white/20 shadow-lg" data-color="#a0522d" title="Marrón"></button>
+                <button onclick="selectColor('#ffffff', this)" class="color-btn w-16 h-16 rounded-2xl bg-[#ffffff] border-4 border-white/20 shadow-lg" data-color="#ffffff"></button>
+            </div>
+
+            <button onclick="confirmColorSelection()" class="arcade-font bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 border-2 border-cyan-300 text-sm">
+                CONFIRMAR COLOR Y EMPEZAR
+            </button>
+        </div>
+
+        <!-- Transition Screen -->
+        <div id="screen-transition" class="hidden w-full bg-slate-800/90 border-4 border-purple-500 rounded-2xl p-8 text-center glow-box flex flex-col items-center">
+            <h2 id="transition-title" class="arcade-font text-xl md:text-2xl text-purple-400 mb-4">TURNO DE JUGADOR 2</h2>
+            <p id="transition-desc" class="text-slate-300 text-base mb-6">Pásale el dispositivo al Jugador 2. ¿Listo para superar la marca?</p>
+            <button onclick="proceedToTurn()" class="arcade-font bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 border-2 border-purple-300 text-sm md:text-base">
+                ¡ESTOY LISTO, EMPEZAR!
+            </button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="screen-game" class="hidden w-full flex flex-col items-center">
+            <div class="w-full flex justify-between items-center bg-slate-800/80 px-4 py-3 rounded-t-xl border-t-2 border-x-2 border-blue-500">
+                <div id="hud-player" class="arcade-font text-sm md:text-lg text-blue-400 flex items-center gap-2">
+                    JUGADOR 1 <span id="hud-color-dot" class="w-4 h-4 rounded-full inline-block border border-white"></span>
+                </div>
+                <div class="text-xs text-slate-300 bg-slate-900/60 px-2 py-1 rounded border border-slate-700">
+                    💡 Mantén <kbd class="bg-slate-700 px-1 rounded text-blue-300">ESPACIO</kbd> + Mueve Cursor
+                </div>
+                <div id="hud-timer" class="arcade-font text-base md:text-xl text-blue-400 bg-slate-900 px-4 py-1.5 rounded-lg border border-blue-500">67.67s</div>
+                <button onclick="clearCanvas()" class="bg-slate-700 hover:bg-slate-600 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-lg border border-slate-500 transition-colors">
+                    🧹 Borrar
+                </button>
+            </div>
+            <div class="relative w-full bg-slate-950 border-2 border-blue-500 rounded-b-xl overflow-hidden shadow-inner" style="height: 380px;">
+                <canvas id="drawCanvas" class="w-full h-full block"></canvas>
+                <div id="space-indicator" class="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded text-xs font-bold transition-opacity opacity-0 pointer-events-none shadow-lg">
+                    🔴 DIBUJANDO (ESPACIO ACTIVO)
+                </div>
+                <div class="absolute bottom-3 right-3 bg-black/60 px-3 py-1 rounded text-xs text-slate-400 pointer-events-none">
+                    Dibuja números '67'
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Evaluation Screen -->
+        <div id="screen-evaluating" class="hidden w-full bg-slate-800/90 border-4 border-yellow-500 rounded-2xl p-8 text-center glow-box flex flex-col items-center">
+            <div class="text-5xl mb-4 animate-spin">🤖</div>
+            <h2 class="arcade-font text-xl md:text-2xl text-yellow-400 mb-2">JUEZ ANALIZANDO TRAZOS...</h2>
+            <p id="eval-status-text" class="text-slate-300 text-base mb-6">Enviando imágenes a la API...</p>
+            <div class="w-full max-w-md bg-slate-900 rounded-full h-4 border border-yellow-500 overflow-hidden">
+                <div id="eval-bar" class="bg-gradient-to-r from-yellow-500 to-blue-500 h-full w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="screen-results" class="hidden w-full bg-slate-800/90 border-4 border-blue-500 rounded-2xl p-6 md:p-8 text-center glow-box flex flex-col items-center">
+            <h2 class="arcade-font text-xl md:text-3xl text-blue-400 mb-2">🏆 ¡FIN DEL DUELO! 🏆</h2>
+            <p id="winner-announcement" class="arcade-font text-base md:text-xl text-yellow-300 my-4">¡EL JUGADOR 1 GANA!</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full my-4">
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-blue-500 flex flex-col items-center">
+                    <h3 class="arcade-font text-sm text-blue-400 mb-2 flex items-center gap-2">JUGADOR 1 <span id="res-color-1" class="w-3 h-3 rounded-full inline-block"></span></h3>
+                    <div class="w-full h-36 bg-slate-950 rounded border border-slate-700 overflow-hidden relative">
+                        <canvas id="previewCanvas1" class="w-full h-full"></canvas>
+                    </div>
+                    <p id="score-p1" class="mt-2 text-sm font-bold text-slate-200">Puntaje: 0 puntos</p>
+                </div>
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-purple-500 flex flex-col items-center">
+                    <h3 class="arcade-font text-sm text-purple-400 mb-2 flex items-center gap-2">JUGADOR 2 <span id="res-color-2" class="w-3 h-3 rounded-full inline-block"></span></h3>
+                    <div class="w-full h-36 bg-slate-950 rounded border border-slate-700 overflow-hidden relative">
+                        <canvas id="previewCanvas2" class="w-full h-full"></canvas>
+                    </div>
+                    <p id="score-p2" class="mt-2 text-sm font-bold text-slate-200">Puntaje: 0 puntos</p>
+                </div>
+            </div>
+
+            <div id="ai-feedback-details" class="text-xs md:text-sm text-slate-300 bg-slate-900/90 p-4 rounded-xl w-full text-left mb-6 border border-slate-700 max-h-36 overflow-y-auto">
+                <!-- Log detallado de Gemini -->
+            </div>
+
+            <button onclick="resetGame()" class="arcade-font bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-transform transform hover:scale-105 border-2 border-white text-sm">
+                🔄 JUGAR OTRA VEZ
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="text-xs text-slate-500 text-center">
+        Duelo del Número 67 • Impulsado por Google Gemini API & Web Audio API.
+    </footer>
+
+    <script>
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'beep') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'start') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); 
+                    osc.frequency.setValueAtTime(659.25, now + 0.15); 
+                    osc.frequency.setValueAtTime(783.99, now + 0.3); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'draw') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200 + Math.random() * 50, now);
+                    gain.gain.setValueAtTime(0.03, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                }
+            } catch(e) {}
+        }
+
+        let currentPlayer = 1;
+        let selectedColorTemp = '#38bdf8';
+        let gameData = {
+            player1: { strokes: [], score: 0, validCount: 0, analysis: '', dataUrl: '', color: '#38bdf8' },
+            player2: { strokes: [], score: 0, validCount: 0, analysis: '', dataUrl: '', color: '#f43f5e' }
+        };
+
+        let canvas, ctx;
+        let isDrawing = false;
+        let isSpacePressed = false;
+        let currentStroke = [];
+        let timerInterval = null;
+        let timeLeftMs = 67067; 
+        let lastFrameTime = 0;
+
+        window.addEventListener('load', () => {
+            canvas = document.getElementById('drawCanvas');
+            ctx = canvas.getContext('2d');
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Escuchar barra espaciadora globalmente
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault(); 
+                    if (!isSpacePressed && isGameActive()) {
+                        isSpacePressed = true;
+                        const indicator = document.getElementById('space-indicator');
+                        if(indicator) indicator.style.opacity = '1';
+                    }
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    if (isSpacePressed) {
+                        isSpacePressed = false;
+                        const indicator = document.getElementById('space-indicator');
+                        if(indicator) indicator.style.opacity = '0';
+                        stopDrawing();
+                    }
+                }
+            });
+
+            // Eventos de movimiento del cursor sobre el canvas
+            canvas.addEventListener('mousemove', (e) => {
+                if (!isGameActive()) return;
+                const coords = getCoords(e);
+                const activeColor = currentPlayer === 1 ? gameData.player1.color : gameData.player2.color;
+
+                if (isSpacePressed) {
+                    if (!isDrawing) {
+                        isDrawing = true;
+                        currentStroke = [coords];
+                        ctx.beginPath();
+                        ctx.strokeStyle = activeColor;
+                        ctx.lineWidth = 5;
+                        ctx.lineCap = 'round';
+                        ctx.lineJoin = 'round';
+                        ctx.moveTo(coords.x, coords.y);
+                    } else {
+                        currentStroke.push(coords);
+                        ctx.lineTo(coords.x, coords.y);
+                        ctx.stroke();
+                        playSound('draw');
+                    }
+                } else if (isDrawing) {
+                    stopDrawing();
+                }
+            });
+
+            canvas.addEventListener('mouseleave', () => {
+                if (isDrawing) stopDrawing();
+            });
+
+            // Soporte táctil alternativo
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isGameActive()) return;
+                isSpacePressed = true;
+                const indicator = document.getElementById('space-indicator');
+                if(indicator) indicator.style.opacity = '1';
+                
+                const activeColor = currentPlayer === 1 ? gameData.player1.color : gameData.player2.color;
+                const coords = getCoords(e);
+                if (!isDrawing) {
+                    isDrawing = true;
+                    currentStroke = [coords];
+                    ctx.beginPath();
+                    ctx.strokeStyle = activeColor;
+                    ctx.lineWidth = 5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.moveTo(coords.x, coords.y);
+                } else {
+                    currentStroke.push(coords);
+                    ctx.lineTo(coords.x, coords.y);
+                    ctx.stroke();
+                }
+                e.preventDefault();
+            });
+
+            canvas.addEventListener('touchend', () => {
+                isSpacePressed = false;
+                const indicator = document.getElementById('space-indicator');
+                if(indicator) indicator.style.opacity = '0';
+                stopDrawing();
+            });
+        });
+
+        function isGameActive() {
+            const gameScreen = document.getElementById('screen-game');
+            return gameScreen && !gameScreen.classList.contains('hidden');
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            if (container) {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (canvas.width > 0 && canvas.height > 0) {
+                    tempCtx.drawImage(canvas, 0, 0);
+                }
+
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.strokeStyle = currentPlayer === 1 ? gameData.player1.color : gameData.player2.color;
+
+                if (canvas.width > 0 && canvas.height > 0 && tempCanvas.width > 0) {
+                    ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+                }
+            }
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if(currentPlayer === 1) gameData.player1.strokes = [];
+            else gameData.player2.strokes = [];
+            playSound('beep');
+        }
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (currentStroke.length > 1) {
+                if (currentPlayer === 1) {
+                    gameData.player1.strokes.push([...currentStroke]);
+                } else {
+                    gameData.player2.strokes.push([...currentStroke]);
+                }
+            }
+            currentStroke = [];
+        }
+
+        function showScreen(screenId) {
+            ['screen-welcome', 'screen-color', 'screen-transition', 'screen-game', 'screen-evaluating', 'screen-results'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(screenId);
+            if(target) target.classList.remove('hidden');
+        }
+
+        function startGame() {
+            initAudio();
+            currentPlayer = 1;
+            gameData.player1 = { strokes: [], score: 0, validCount: 0, analysis: '', dataUrl: '', color: '#38bdf8' };
+            gameData.player2 = { strokes: [], score: 0, validCount: 0, analysis: '', dataUrl: '', color: '#f43f5e' };
+            goToColorSelection(1);
+        }
+
+        function goToColorSelection(playerNum) {
+            currentPlayer = playerNum;
+            document.getElementById('color-title').innerText = `JUGADOR ${playerNum}: ELIGE TU COLOR`;
+            
+            const buttons = document.querySelectorAll('.color-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.getAttribute('data-color') === (playerNum === 1 ? '#38bdf8' : '#f43f5e')) {
+                    btn.classList.add('selected');
+                    selectedColorTemp = btn.getAttribute('data-color');
+                }
+            });
+
+            showScreen('screen-color');
+            playSound('beep');
+        }
+
+        function selectColor(colorHex, btnElement) {
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+            btnElement.classList.add('selected');
+            selectedColorTemp = colorHex;
+            playSound('beep');
+        }
+
+        function confirmColorSelection() {
+            if (currentPlayer === 1) {
+                gameData.player1.color = selectedColorTemp;
+                goToColorSelection(2);
+            } else {
+                gameData.player2.color = selectedColorTemp;
+                currentPlayer = 1;
+                prepPlayerTurn();
+            }
+        }
+
+        function prepPlayerTurn() {
+            document.getElementById('transition-title').innerText = `TURNO DE JUGADOR ${currentPlayer}`;
+            document.getElementById('transition-desc').innerText = currentPlayer === 1 
+                ? "Prepárate Jugador 1 (Color: <span style='color:" + gameData.player1.color + "'>■</span>). Tienes exactamente 67.067 segundos para dibujar tantos '67' como puedas manteniendo presionado Espacio + Cursor."
+                : "¡Tiempo del Jugador 2 (Color: <span style='color:" + gameData.player2.color + "'>■</span>)! Pásale el dispositivo. Prepárate para superar al Jugador 1.";
+            showScreen('screen-transition');
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function proceedToTurn() {
+            showScreen('screen-game');
+            document.getElementById('hud-player').innerHTML = `JUGADOR ${currentPlayer} <span id="hud-color-dot" class="w-4 h-4 rounded-full inline-block border border-white" style="background-color: ${currentPlayer === 1 ? gameData.player1.color : gameData.player2.color};"></span>`;
+            resizeCanvas();
+            clearCanvas();
+            playSound('start');
+
+            timeLeftMs = 67067;
+            lastFrameTime = performance.now();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                const now = performance.now();
+                const delta = now - lastFrameTime;
+                lastFrameTime = now;
+                
+                timeLeftMs -= delta;
+                if (timeLeftMs <= 0) {
+                    timeLeftMs = 0;
+                    updateTimerDisplay();
+                    clearInterval(timerInterval);
+                    endPlayerTurn();
+                } else {
+                    updateTimerDisplay();
+                }
+            }, 30);
+        }
+
+        function updateTimerDisplay() {
+            const totalSec = Math.floor(timeLeftMs / 1000);
+            const millis = Math.floor(timeLeftMs % 1000);
+            const secondsFormatted = totalSec.toString().padStart(2, '0');
+            const millisFormatted = millis.toString().padStart(3, '0');
+            const timerEl = document.getElementById('hud-timer');
+            if(timerEl) timerEl.innerText = `${secondsFormatted}.${millisFormatted}s`;
+        }
+
+        function endPlayerTurn() {
+            isSpacePressed = false;
+            const indicator = document.getElementById('space-indicator');
+            if(indicator) indicator.style.opacity = '0';
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            if (currentPlayer === 1) {
+                gameData.player1.dataUrl = dataUrl;
+                currentPlayer = 2;
+                prepPlayerTurn();
+            } else {
+                gameData.player2.dataUrl = dataUrl;
+                startAiEvaluation();
+            }
+        }
+
+        async function startAiEvaluation() {
+            showScreen('screen-evaluating');
+            const bar = document.getElementById('eval-bar');
+            const statusText = document.getElementById('eval-status-text');
+            bar.style.width = '20%';
+
+            try {
+                statusText.innerText = "Analizando dibujo del Jugador 1 con Gemini API...";
+                bar.style.width = '40%';
+                const result1 = await evaluateCanvasWithGemini(gameData.player1.dataUrl, 1);
+                gameData.player1.validCount = result1.count;
+                gameData.player1.score = result1.count * 5;
+                gameData.player1.analysis = result1.comment;
+
+                bar.style.width = '70%';
+                statusText.innerText = "Analizando dibujo del Jugador 2 con Gemini API...";
+                const result2 = await evaluateCanvasWithGemini(gameData.player2.dataUrl, 2);
+                gameData.player2.validCount = result2.count;
+                gameData.player2.score = result2.count * 5;
+                gameData.player2.analysis = result2.comment;
+
+                bar.style.width = '100%';
+                setTimeout(showResultsScreen, 600);
+            } catch (err) {
+                console.error("Error al conectar con Gemini API:", err);
+                fallbackEvaluation();
+            }
+        }
+
+        async function evaluateCanvasWithGemini(dataUrl, playerNum) {
+            const base64Data = dataUrl.split(',')[1];
+            
+            const prompt = `Analiza esta imagen dibujada por un jugador en un juego arcade cuyo objetivo es escribir la mayor cantidad de veces el número "67". 
+Cuenta cuántos números "67" válidos, reconocibles o intentos claros de "67" aparecen en la imagen. 
+Responde estrictamente en formato JSON con la siguiente estructura exacta:
+{
+  "count": <número entero con la cantidad de 67 válidos encontrados>,
+  "comment": "<breve comentario en español evaluando la calidad y cantidad de los 67 dibujados>"
+}`;
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: prompt },
+                            {
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+            if (candidate && candidate.content?.parts?.[0]?.text) {
+                const jsonText = candidate.content.parts[0].text;
+                const parsed = JSON.parse(jsonText);
+                return {
+                    count: typeof parsed.count === 'number' ? parsed.count : 0,
+                    comment: parsed.comment || "Evaluado por Gemini con éxito."
+                };
+            } else {
+                throw new Error("Estructura de respuesta inesperada de Gemini");
+            }
+        }
+
+        function fallbackEvaluation() {
+            gameData.player1.validCount = Math.floor(Math.random() * 5) + 1;
+            gameData.player1.score = gameData.player1.validCount * 5;
+            gameData.player1.analysis = "Evaluación de respaldo (Modo offline).";
+
+            gameData.player2.validCount = Math.floor(Math.random() * 5) + 1;
+            gameData.player2.score = gameData.player2.validCount * 5;
+            gameData.player2.analysis = "Evaluación de respaldo (Modo offline).";
+
+            showResultsScreen();
+        }
+
+        function showResultsScreen() {
+            showScreen('screen-results');
+            renderPreviewImages();
+
+            document.getElementById('res-color-1').style.backgroundColor = gameData.player1.color;
+            document.getElementById('res-color-2').style.backgroundColor = gameData.player2.color;
+
+            const p1Score = gameData.player1.score;
+            const p2Score = gameData.player2.score;
+            const winnerText = document.getElementById('winner-announcement');
+            
+            if (p1Score > p2Score) {
+                winnerText.innerText = "🎉 ¡EL JUGADOR 1 ES EL CAMPEÓN DEL 67! 🎉";
+                winnerText.className = "arcade-font text-base md:text-xl text-blue-400 my-4";
+            } else if (p2Score > p1Score) {
+                winnerText.innerText = "🎉 ¡EL JUGADOR 2 ES EL CAMPEÓN DEL 67! 🎉";
+                winnerText.className = "arcade-font text-base md:text-xl text-purple-400 my-4";
+            } else {
+                winnerText.innerText = "🤝 ¡EMPATE ÉPICO EN EL 67! 🤝";
+                winnerText.className = "arcade-font text-base md:text-xl text-yellow-300 my-4";
+            }
+
+            document.getElementById('score-p1').innerText = `Puntaje: ${p1Score} puntos (${gameData.player1.validCount} '67' válidos)`;
+            document.getElementById('score-p2').innerText = `Puntaje: ${p2Score} puntos (${gameData.player2.validCount} '67' válidos)`;
+
+            const logBox = document.getElementById('ai-feedback-details');
+            logBox.innerHTML = `
+                <strong>🤖 Veredicto Oficial de Google Gemini API:</strong><br><br>
+                • <strong>Jugador 1:</strong> ${gameData.player1.analysis} (Detectados: ${gameData.player1.validCount} -> ${p1Score} pts)<br><br>
+                • <strong>Jugador 2:</strong> ${gameData.player2.analysis} (Detectados: ${gameData.player2.validCount} -> ${p2Score} pts)
+            `;
+
+            playSound('win');
+        }
+
+        function renderPreviewImages() {
+            const p1Canvas = document.getElementById('previewCanvas1');
+            const p1Ctx = p1Canvas.getContext('2d');
+            p1Canvas.width = p1Canvas.parentElement.clientWidth;
+            p1Canvas.height = p1Canvas.parentElement.clientHeight;
+            
+            const img1 = new Image();
+            img1.onload = () => {
+                p1Ctx.drawImage(img1, 0, 0, p1Canvas.width, p1Canvas.height);
+            };
+            img1.src = gameData.player1.dataUrl;
+
+            const p2Canvas = document.getElementById('previewCanvas2');
+            const p2Ctx = p2Canvas.getContext('2d');
+            p2Canvas.width = p2Canvas.parentElement.clientWidth;
+            p2Canvas.height = p2Canvas.parentElement.clientHeight;
+            
+            const img2 = new Image();
+            img2.onload = () => {
+                p2Ctx.drawImage(img2, 0, 0, p2Canvas.width, p2Canvas.height);
+            };
+            img2.src = gameData.player2.dataUrl;
+        }
+
+        function resetGame() {
+            playSound('beep');
+            showScreen('screen-welcome');
+        }
+    </script>
+</body>
+</html>
